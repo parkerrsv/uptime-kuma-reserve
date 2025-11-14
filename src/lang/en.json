@@ -1187,6 +1187,7 @@
     "Maximum Retries": "Maximum Retries",
     "Template ID": "Template ID",
     "wayToGetClickSMSIRTemplateID": "Your template must contain an {uptkumaalert} field. You can create a new template {here}.",
+    "Recipient Numbers": "Recipient Numbers",
     "reserveMonitor": "Reserve Monitor",
     "reserveMonitorDescription": "Reserve {0} for your use",
     "yourName": "Your Name",
