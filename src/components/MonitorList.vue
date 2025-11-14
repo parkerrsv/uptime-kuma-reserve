@@ -148,7 +148,7 @@ export default {
             },
             currentMonitorId: null,
             currentReservedBy: "",
-            groupByDeviceType: false,
+            groupByDeviceType: true,
             groupCollapsed: {},
         };
     },
@@ -481,7 +481,9 @@ export default {
          * @returns {void}
          */
         toggleGroup(deviceType) {
-            this.$set(this.groupCollapsed, deviceType, !this.groupCollapsed[deviceType]);
+            console.log("Toggling group:", deviceType, "Current state:", this.groupCollapsed[deviceType]);
+            this.groupCollapsed[deviceType] = !this.groupCollapsed[deviceType];
+            console.log("New state:", this.groupCollapsed[deviceType]);
         },
         
         /**
