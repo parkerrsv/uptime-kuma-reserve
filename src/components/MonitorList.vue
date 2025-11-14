@@ -144,6 +144,7 @@ export default {
                 status: null,
                 active: null,
                 tags: null,
+                customFields: null,
             },
             currentMonitorId: null,
             currentReservedBy: "",
@@ -204,30 +205,6 @@ export default {
         groupedMonitors() {
             const groups = {};
             
-            this.sortedMonitorList.forEach(monitor => {
-                const deviceType = monitor.device_type || "Other";
-                if (!groups[deviceType]) {
-                    groups[deviceType] = [];
-                }
-                groups[deviceType].push(monitor);
-            });
-            
-            // Sort groups by device type name
-            const sortedGroups = {};
-            Object.keys(groups).sort().forEach(key => {
-                sortedGroups[key] = groups[key];
-            });
-            
-            return sortedGroups;
-        },
-        
-        /**
-         * Group monitors by device type
-         * @returns {object} Monitors grouped by device type
-         */
-        groupedMonitors() {
-            const groups = {};
-            
             for (const monitor of this.sortedMonitorList) {
                 const deviceType = monitor.device_type || "Other";
                 if (!groups[deviceType]) {
@@ -236,12 +213,13 @@ export default {
                 groups[deviceType].push(monitor);
             }
             
-            // Sort each group
-            for (const deviceType in groups) {
-                groups[deviceType].sort(this.sortFunc);
-            }
+            // Sort groups by device type name
+            const sortedGroups = {};
+            Object.keys(groups).sort().forEach(key => {
+                sortedGroups[key] = groups[key];
+            });
             
-            return groups;
+            return sortedGroups;
         },
 
         monitorListStyle() {
@@ -265,7 +243,7 @@ export default {
          * @returns {boolean} True if any filter is active, false otherwise.
          */
         filtersActive() {
-            return this.filterState.status != null || this.filterState.active != null || this.filterState.tags != null || this.searchText !== "";
+            return this.filterState.status != null || this.filterState.active != null || this.filterState.tags != null || this.filterState.customFields != null || this.searchText !== "";
         }
     },
     watch: {
@@ -417,14 +395,20 @@ export default {
             }
 
             // filter by search text
-            // finds monitor name, tag name or tag value
+            // finds monitor name, tag name, tag value, custom field key or custom field value
             let searchTextMatch = true;
             if (this.searchText !== "") {
                 const loweredSearchText = this.searchText.toLowerCase();
+                const customFields = monitor.custom_fields || {};
+                const customFieldMatch = Object.entries(customFields).some(([key, value]) => 
+                    key.toLowerCase().includes(loweredSearchText) || 
+                    value.toLowerCase().includes(loweredSearchText)
+                );
                 searchTextMatch =
                     monitor.name.toLowerCase().includes(loweredSearchText)
                     || monitor.tags.find(tag => tag.name.toLowerCase().includes(loweredSearchText)
-                        || tag.value?.toLowerCase().includes(loweredSearchText));
+                        || tag.value?.toLowerCase().includes(loweredSearchText))
+                    || customFieldMatch;
             }
 
             // filter by status
@@ -450,7 +434,17 @@ export default {
                     .length > 0;
             }
 
-            return searchTextMatch && statusMatch && activeMatch && tagsMatch;
+            // filter by custom fields
+            let customFieldsMatch = true;
+            if (this.filterState.customFields != null && this.filterState.customFields.length > 0) {
+                const monitorCustomFields = monitor.custom_fields || {};
+                customFieldsMatch = this.filterState.customFields.some(filterField => {
+                    const [key, value] = filterField.split('=');
+                    return monitorCustomFields[key] === value;
+                });
+            }
+
+            return searchTextMatch && statusMatch && activeMatch && tagsMatch && customFieldsMatch;
         },
         /**
          * Function used in Array.sort to order monitors in a list.
@@ -530,17 +524,8 @@ export default {
                 this.currentMonitorId = null;
                 this.currentReservedBy = "";
             }
-        },
-        
-        /**
-         * Toggle device group collapsed state
-         * @param {string} deviceType Device type to toggle
-         * @returns {void}
-         */
-        toggleGroup(deviceType) {
-            this.$set(this.groupCollapsed, deviceType, !this.groupCollapsed[deviceType]);
         }
-    },
+    }
 };
 </script>
 

@@ -34,7 +34,16 @@ It is a temporary live demo, all data will be deleted after 10 minutes. Sponsore
 
 **New in this fork:**
 - **Monitor Reservation System** - Reserve monitors with your name and time duration
+  - Quick time buttons: 1hr, 2hr, 4hr, 1 day
+  - Eternal reservations (no expiration)
+  - Custom date/time picker
+  - **Quick Reserve** - Find and reserve the first available monitor by device type
+- **Device Type Organization** - Categorize monitors with custom device types
+  - User-defined device types (type your own or select from defaults)
+  - Group by Device toggle button for collapsible organization
+  - Suggested types: Server, Router, Switch, Workstation, Printer, IoT Device, Other
 - **Visual Indicators** - Yellow background shows reserved monitors with countdown timer
+  - "Eternal" badge for permanent reservations
 - **Release Warnings** - Confirmation dialog warns before releasing someone else's reservation
 
 **Original Uptime Kuma features:**
@@ -90,6 +99,57 @@ docker compose -f docker-compose-local.yml restart
 ```
 
 Your database and reservations will be preserved.
+
+## 📖 How to Use
+
+### Setting Up Device Types
+
+1. Click on a monitor to edit it
+2. In the edit screen, find the **Device Type** field (below Friendly Name)
+3. Either:
+   - Select from suggested types: Server, Router, Switch, Workstation, Printer, IoT Device, Other
+   - **Or type your own custom device type** and press Enter to create it
+4. Save the monitor
+
+### Grouping Monitors by Device Type
+
+1. On the main dashboard, click the **"Group by Device"** button (next to the Select button)
+2. Monitors will be organized into collapsible groups by device type
+3. Click on any group header to expand/collapse that group
+4. Click the button again to return to the standard list view
+
+### Reserving a Monitor
+
+1. Click the **"Reserve"** button on any monitor card
+2. Enter your name in the dialog
+3. Choose a reservation duration:
+   - **Quick buttons**: 1hr, 2hr, 4hr, or 1 day
+   - **Custom time**: Use the date/time picker for a specific duration
+   - **Eternal**: Check the "Eternal Reservation" box for a permanent reservation
+4. Click **"Reserve"** to confirm
+
+When a monitor is reserved:
+- The card background turns yellow
+- Your name and a countdown timer are displayed
+- Eternal reservations show an "Eternal" badge instead of a timer
+
+### Releasing a Reservation
+
+1. Click the **"Release"** button on a reserved monitor
+2. If it's someone else's reservation, a warning dialog will appear
+3. Confirm the release
+
+### Quick Reserve
+
+For quickly finding and reserving any available monitor of a specific type:
+
+1. Click the **"Quick Reserve"** button (lightning bolt icon) on the main dashboard
+2. Select or type a device type you're looking for
+3. Enter your name
+4. Choose a reservation duration (quick buttons, custom time, or eternal)
+5. Click **"Quick Reserve"**
+6. The system will automatically find the first unreserved monitor of that type and reserve it for you
+7. If no monitors are available, you'll see an error message
 
 ## 📋 Credits
 

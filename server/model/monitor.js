@@ -170,6 +170,9 @@ class Monitor extends BeanModel {
             // Device type
             device_type: this.device_type || "Other",
             
+            // Custom fields
+            custom_fields: this.custom_fields ? JSON.parse(this.custom_fields) : {},
+            
             // reservation info
             reservation: preloadData.reservations?.get(this.id) || null,
         };

@@ -148,6 +148,36 @@
                 </li>
             </template>
         </MonitorListFilterDropdown>
+        <MonitorListFilterDropdown :filterActive="filterState.customFields?.length > 0">
+            <template #status>
+                <span v-if="filterState.customFields?.length === 1">
+                    <span class="custom-field-badge">{{ getCustomFieldDisplay(filterState.customFields[0]) }}</span>
+                </span>
+                <span v-else>
+                    {{ $t('Custom Fields') }}
+                </span>
+            </template>
+            <template #dropdown>
+                <li v-for="field in customFieldsList" :key="field">
+                    <div class="dropdown-item" tabindex="0" @click.stop="toggleCustomFieldFilter(field)">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="custom-field-badge">{{ getCustomFieldDisplay(field) }}</span>
+                            <span class="ps-3">
+                                {{ getCustomFieldMonitorCount(field) }}
+                                <span v-if="filterState.customFields?.includes(field)" class="px-1 filter-active">
+                                    <font-awesome-icon icon="check" />
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+                </li>
+                <li v-if="customFieldsList.length === 0">
+                    <div class="dropdown-item disabled px-3">
+                        {{ $t('No custom fields found.') }}
+                    </div>
+                </li>
+            </template>
+        </MonitorListFilterDropdown>
     </div>
 </template>
 
@@ -172,6 +202,7 @@ export default {
     data() {
         return {
             tagsList: [],
+            customFieldsList: [],
         };
     },
     computed: {
@@ -187,8 +218,17 @@ export default {
             return num;
         }
     },
+    watch: {
+        "$root.monitorList": {
+            handler() {
+                this.getExistingCustomFields();
+            },
+            deep: true
+        }
+    },
     mounted() {
         this.getExistingTags();
+        this.getExistingCustomFields();
     },
     methods: {
         toggleStatusFilter(status) {
@@ -255,6 +295,46 @@ export default {
             return Object.values(this.$root.monitorList).filter(monitor => {
                 return monitor.tags.find(monitorTag => monitorTag.tag_id === tag.id);
             }).length;
+        },
+        toggleCustomFieldFilter(field) {
+            let newFilter = {
+                ...this.filterState
+            };
+
+            if (newFilter.customFields == null) {
+                newFilter.customFields = [ field ];
+            } else {
+                if (newFilter.customFields.includes(field)) {
+                    newFilter.customFields = newFilter.customFields.filter(item => item !== field);
+                } else {
+                    newFilter.customFields.push(field);
+                }
+            }
+            this.$emit("updateFilter", newFilter);
+        },
+        getExistingCustomFields() {
+            const customFieldsSet = new Set();
+            Object.values(this.$root.monitorList).forEach(monitor => {
+                if (monitor.custom_fields && typeof monitor.custom_fields === 'object') {
+                    Object.entries(monitor.custom_fields).forEach(([key, value]) => {
+                        if (key && value) {
+                            customFieldsSet.add(`${key}=${value}`);
+                        }
+                    });
+                }
+            });
+            this.customFieldsList = Array.from(customFieldsSet).sort();
+        },
+        getCustomFieldDisplay(field) {
+            const [key, value] = field.split('=');
+            return `${key}: ${value}`;
+        },
+        getCustomFieldMonitorCount(field) {
+            const [key, value] = field.split('=');
+            return Object.values(this.$root.monitorList).filter(monitor => {
+                const customFields = monitor.custom_fields || {};
+                return customFields[key] === value;
+            }).length;
         }
     }
 };
@@ -288,6 +368,19 @@ export default {
         .dark & {
             background-color: $dark-font-color2;
         }
+    }
+}
+
+.custom-field-badge {
+    font-size: 0.9em;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background-color: #e3f2fd;
+    color: #1976d2;
+
+    .dark & {
+        background-color: #1e3a5f;
+        color: #90caf9;
     }
 }
 </style>

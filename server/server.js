@@ -720,6 +720,11 @@ let needSetup = false;
 
                 monitor.rabbitmqNodes = JSON.stringify(monitor.rabbitmqNodes);
 
+                // Stringify custom_fields if present
+                if (monitor.custom_fields) {
+                    monitor.custom_fields = JSON.stringify(monitor.custom_fields);
+                }
+
                 /*
                  * List of frontend-only properties that should not be saved to the database.
                  * Should clean up before saving to the database.
@@ -890,6 +895,14 @@ let needSetup = false;
                 bean.rabbitmqPassword = monitor.rabbitmqPassword;
                 bean.conditions = JSON.stringify(monitor.conditions);
                 bean.manual_status = monitor.manual_status;
+                bean.device_type = monitor.device_type;
+                
+                // Handle custom_fields
+                if (monitor.custom_fields) {
+                    bean.custom_fields = JSON.stringify(monitor.custom_fields);
+                } else {
+                    bean.custom_fields = null;
+                }
 
                 // ping advanced options
                 bean.ping_numeric = monitor.ping_numeric;

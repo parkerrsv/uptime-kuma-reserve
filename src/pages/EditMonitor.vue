@@ -121,15 +121,16 @@
                             <!-- Device Type -->
                             <div class="my-3">
                                 <label for="device_type" class="form-label">{{ $t("Device Type") }}</label>
-                                <select id="device_type" v-model="monitor.device_type" class="form-select">
-                                    <option value="Server">{{ $t("Server") }}</option>
-                                    <option value="Router">{{ $t("Router") }}</option>
-                                    <option value="Switch">{{ $t("Switch") }}</option>
-                                    <option value="Workstation">{{ $t("Workstation") }}</option>
-                                    <option value="Printer">{{ $t("Printer") }}</option>
-                                    <option value="IoT Device">{{ $t("IoT Device") }}</option>
-                                    <option value="Other">{{ $t("Other") }}</option>
-                                </select>
+                                <VueMultiselect
+                                    id="device_type"
+                                    v-model="monitor.device_type"
+                                    :options="deviceTypeOptions"
+                                    :multiple="false"
+                                    :taggable="true"
+                                    :placeholder="$t('Select or type a device type...')"
+                                    :show-labels="false"
+                                    @tag="addDeviceType"
+                                ></VueMultiselect>
                             </div>
 
                             <!-- Manual Status switcher -->
@@ -839,6 +840,10 @@
                             <div class="my-3">
                                 <tags-manager ref="tagsManager" :pre-selected-tags="monitor.tags"></tags-manager>
                             </div>
+
+                            <div class="my-3">
+                                <CustomFieldsEditor v-model="monitor.custom_fields" />
+                            </div>
                         </div>
 
                         <div class="col-md-6">
@@ -1181,6 +1186,7 @@ import DockerHostDialog from "../components/DockerHostDialog.vue";
 import RemoteBrowserDialog from "../components/RemoteBrowserDialog.vue";
 import ProxyDialog from "../components/ProxyDialog.vue";
 import TagsManager from "../components/TagsManager.vue";
+import CustomFieldsEditor from "../components/CustomFieldsEditor.vue";
 import {
     genSecret,
     isDev,
@@ -1240,7 +1246,8 @@ const monitorDefaults = {
     rabbitmqNodes: [],
     rabbitmqUsername: "",
     rabbitmqPassword: "",
-    conditions: []
+    conditions: [],
+    custom_fields: {}
 };
 
 export default {
@@ -1254,6 +1261,7 @@ export default {
         DockerHostDialog,
         RemoteBrowserDialog,
         TagsManager,
+        CustomFieldsEditor,
         VueMultiselect,
         EditMonitorConditions,
     },
@@ -1282,6 +1290,7 @@ export default {
             },
             draftGroupName: null,
             remoteBrowsersEnabled: false,
+            deviceTypeOptions: [],
         };
     },
 
@@ -1749,6 +1758,9 @@ message HealthCheckResponse {
         this.acceptedStatusCodeOptions = acceptedStatusCodeOptions;
         this.dnsresolvetypeOptions = dnsresolvetypeOptions;
         this.kafkaSaslMechanismOptions = kafkaSaslMechanismOptions;
+
+        // Populate device type options from existing monitors
+        this.loadDeviceTypes();
     },
     methods: {
         /**
@@ -1791,6 +1803,17 @@ message HealthCheckResponse {
                         }
 
                         this.monitor = res.monitor;
+
+                        // Parse custom_fields JSON if it exists
+                        if (this.monitor.custom_fields && typeof this.monitor.custom_fields === "string") {
+                            try {
+                                this.monitor.custom_fields = JSON.parse(this.monitor.custom_fields);
+                            } catch (e) {
+                                this.monitor.custom_fields = {};
+                            }
+                        } else if (!this.monitor.custom_fields) {
+                            this.monitor.custom_fields = {};
+                        }
 
                         if (this.isClone) {
                             /*
@@ -2101,6 +2124,40 @@ message HealthCheckResponse {
                     this.monitor.timeout = clampedValue;
                 }
             }
+        },
+
+        /**
+         * Add a custom device type to the options
+         * @param {string} newDeviceType - The new device type to add
+         * @returns {void}
+         */
+        addDeviceType(newDeviceType) {
+            // Add to options if not already present
+            if (!this.deviceTypeOptions.includes(newDeviceType)) {
+                this.deviceTypeOptions.push(newDeviceType);
+            }
+            // Set as the current device type
+            this.monitor.device_type = newDeviceType;
+        },
+
+        /**
+         * Load device types from existing monitors
+         * @returns {void}
+         */
+        loadDeviceTypes() {
+            const deviceTypes = new Set();
+            
+            // Collect all unique device types from existing monitors
+            if (this.$root.monitorList) {
+                Object.values(this.$root.monitorList).forEach(monitor => {
+                    if (monitor.device_type && monitor.device_type.trim() !== "") {
+                        deviceTypes.add(monitor.device_type);
+                    }
+                });
+            }
+            
+            // Convert to array and sort alphabetically
+            this.deviceTypeOptions = Array.from(deviceTypes).sort();
         },
 
     },

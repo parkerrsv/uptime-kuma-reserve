@@ -31,6 +31,11 @@
                         <font-awesome-icon icon="tachometer-alt" /> {{ $t("Dashboard") }}
                     </router-link>
                 </li>
+                <li v-if="$root.loggedIn" class="nav-item me-2">
+                    <button class="nav-link btn" @click="showQuickReserve">
+                        <font-awesome-icon icon="bolt" /> {{ $t("Quick Reserve") }}
+                    </button>
+                </li>
                 <li v-if="$root.loggedIn" class="nav-item">
                     <div class="dropdown dropdown-profile-pic">
                         <div class="nav-link" data-bs-toggle="dropdown">
@@ -126,11 +131,14 @@
         >
             <font-awesome-icon icon="times" />
         </button>
+
+        <QuickReserveDialog ref="quickReserveDialog" @quickReserve="handleQuickReserve" />
     </div>
 </template>
 
 <script>
 import Login from "../components/Login.vue";
+import QuickReserveDialog from "../components/QuickReserveDialog.vue";
 import compareVersions from "compare-versions";
 import { useToast } from "vue-toastification";
 const toast = useToast();
@@ -139,6 +147,7 @@ export default {
 
     components: {
         Login,
+        QuickReserveDialog,
     },
 
     data() {
@@ -201,6 +210,48 @@ export default {
          */
         clearToasts() {
             toast.clear();
+        },
+
+        /**
+         * Show the Quick Reserve dialog
+         * @returns {void}
+         */
+        showQuickReserve() {
+            this.$refs.quickReserveDialog.showDialog();
+        },
+
+        /**
+         * Handle quick reserve request
+         * @param {Object} data - Reserve data with deviceType, name, reservedUntil
+         * @returns {void}
+         */
+        handleQuickReserve(data) {
+            // Find first unreserved monitor of the specified device type
+            const monitors = Object.values(this.$root.monitorList || {});
+            const now = new Date();
+            
+            const available = monitors.find(monitor => {
+                const deviceType = monitor.device_type || "Other";
+                const matchesType = deviceType === data.deviceType;
+                
+                const isAvailable = !monitor.reservation || 
+                    new Date(monitor.reservation.reserved_until) < now;
+                
+                return matchesType && isAvailable;
+            });
+
+            if (available) {
+                // Reserve the monitor
+                this.$root.getSocket().emit("reserveMonitor", available.id, data.name, data.reservedUntil, (res) => {
+                    if (res.ok) {
+                        toast.success(this.$t("Quick reserved {0} successfully", [available.name]));
+                    } else {
+                        toast.error(res.msg);
+                    }
+                });
+            } else {
+                toast.error(this.$t("No available monitors found for device type: {0}", [data.deviceType]));
+            }
         }
     },
 
