@@ -1644,21 +1644,32 @@ let needSetup = false;
                     throw new Error("Monitor not found");
                 }
 
-                // Check if monitor is already reserved
-                const existingReservation = await R.findOne("monitor_reservation", " monitor_id = ? AND reserved_until > ? ", [
-                    monitorID,
-                    R.isoDateTime(dayjs())
-                ]);
+                // Check if monitor is already reserved (skip check if eternal - null until)
+                if (reservedUntil !== null) {
+                    const existingReservation = await R.findOne("monitor_reservation", " monitor_id = ? AND reserved_until > ? ", [
+                        monitorID,
+                        R.isoDateTime(dayjs())
+                    ]);
 
-                if (existingReservation) {
-                    throw new Error("Monitor is already reserved");
+                    if (existingReservation) {
+                        throw new Error("Monitor is already reserved");
+                    }
+                } else {
+                    // For eternal reservations, check if any reservation exists
+                    const existingReservation = await R.findOne("monitor_reservation", " monitor_id = ? ", [ monitorID ]);
+                    if (existingReservation) {
+                        throw new Error("Monitor is already reserved");
+                    }
                 }
 
                 // Create new reservation
                 const reservation = R.dispense("monitor_reservation");
                 reservation.monitor_id = monitorID;
                 reservation.reserved_by = reservedBy;
-                reservation.reserved_until = R.isoDateTime(dayjs(reservedUntil));
+                // For eternal reservations (null), set to year 9999
+                reservation.reserved_until = reservedUntil === null 
+                    ? R.isoDateTime(dayjs("9999-12-31"))
+                    : R.isoDateTime(dayjs(reservedUntil));
                 await R.store(reservation);
 
                 // Broadcast reservation update to all clients
@@ -1671,7 +1682,7 @@ let needSetup = false;
                     }
                 });
 
-                log.info("monitor", `Monitor ${monitorID} reserved by ${reservedBy} until ${reservedUntil}`);
+                log.info("monitor", `Monitor ${monitorID} reserved by ${reservedBy} until ${reservedUntil || 'eternal'}`);
 
                 callback({
                     ok: true,

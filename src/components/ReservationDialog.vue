@@ -27,14 +27,38 @@
                         
                         <div class="mb-3">
                             <label for="reserved-until" class="form-label">{{ $t("reserveUntil") }}</label>
+                            
+                            <!-- Quick time buttons -->
+                            <div class="btn-group w-100 mb-2" role="group">
+                                <button type="button" class="btn btn-outline-primary btn-sm" @click="setQuickTime(1)" :disabled="isEternal">1hr</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" @click="setQuickTime(2)" :disabled="isEternal">2hr</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" @click="setQuickTime(4)" :disabled="isEternal">4hr</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" @click="setQuickTime(24)" :disabled="isEternal">1 day</button>
+                            </div>
+                            
                             <input 
                                 id="reserved-until" 
                                 v-model="reservedUntil" 
                                 type="datetime-local" 
                                 class="form-control"
                                 :min="minDateTime"
-                                required
+                                :disabled="isEternal"
+                                :required="!isEternal"
                             >
+                            
+                            <!-- Eternal checkbox -->
+                            <div class="form-check mt-2">
+                                <input 
+                                    id="eternal-reservation" 
+                                    v-model="isEternal" 
+                                    type="checkbox" 
+                                    class="form-check-input"
+                                    @change="handleEternalChange"
+                                >
+                                <label for="eternal-reservation" class="form-check-label">
+                                    {{ $t("eternalReservation") }}
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -64,6 +88,7 @@ export default {
             reservedBy: "",
             reservedUntil: "",
             minDateTime: "",
+            isEternal: false,
         };
     },
     computed: {
@@ -72,7 +97,7 @@ export default {
          * @returns {boolean} True if all required fields are filled
          */
         canReserve() {
-            return this.reservedBy.trim() !== "" && this.reservedUntil !== "";
+            return this.reservedBy.trim() !== "" && (this.isEternal || this.reservedUntil !== "");
         }
     },
     mounted() {
@@ -89,8 +114,28 @@ export default {
             this.monitor = monitor;
             this.reservedBy = "";
             this.reservedUntil = "";
+            this.isEternal = false;
             this.updateMinDateTime();
             this.modal.show();
+        },
+        
+        /**
+         * Set quick time option
+         * @param {number} hours Number of hours to add
+         * @returns {void}
+         */
+        setQuickTime(hours) {
+            this.reservedUntil = dayjs().add(hours, "hour").format("YYYY-MM-DDTHH:mm");
+        },
+        
+        /**
+         * Handle eternal checkbox change
+         * @returns {void}
+         */
+        handleEternalChange() {
+            if (this.isEternal) {
+                this.reservedUntil = "";
+            }
         },
         
         /**
@@ -110,7 +155,9 @@ export default {
                 return;
             }
             
-            this.$root.getSocket().emit("reserveMonitor", this.monitor.id, this.reservedBy, this.reservedUntil, (res) => {
+            const until = this.isEternal ? null : this.reservedUntil;
+            
+            this.$root.getSocket().emit("reserveMonitor", this.monitor.id, this.reservedBy, until, (res) => {
                 if (res.ok) {
                     this.$root.toastSuccess(this.$t("reservationSuccess"));
                     this.modal.hide();

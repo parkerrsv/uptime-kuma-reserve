@@ -118,6 +118,20 @@
                                 <input id="name" v-model="monitor.name" type="text" class="form-control" data-testid="friendly-name-input" :placeholder="defaultFriendlyName">
                             </div>
 
+                            <!-- Device Type -->
+                            <div class="my-3">
+                                <label for="device_type" class="form-label">{{ $t("Device Type") }}</label>
+                                <select id="device_type" v-model="monitor.device_type" class="form-select">
+                                    <option value="Server">{{ $t("Server") }}</option>
+                                    <option value="Router">{{ $t("Router") }}</option>
+                                    <option value="Switch">{{ $t("Switch") }}</option>
+                                    <option value="Workstation">{{ $t("Workstation") }}</option>
+                                    <option value="Printer">{{ $t("Printer") }}</option>
+                                    <option value="IoT Device">{{ $t("IoT Device") }}</option>
+                                    <option value="Other">{{ $t("Other") }}</option>
+                                </select>
+                            </div>
+
                             <!-- Manual Status switcher -->
                             <div v-if="monitor.type === 'manual'" class="mb-3">
                                 <div class="btn-group w-100 mb-3">

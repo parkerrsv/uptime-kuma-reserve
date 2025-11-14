@@ -5,6 +5,10 @@
                 <button class="btn btn-outline-normal ms-2" :class="{ 'active': selectMode }" type="button" @click="selectMode = !selectMode">
                     {{ $t("Select") }}
                 </button>
+                
+                <button class="btn btn-outline-normal ms-2" :class="{ 'active': groupByDeviceType }" type="button" @click="groupByDeviceType = !groupByDeviceType">
+                    <font-awesome-icon icon="layer-group" /> {{ $t("Group by Device") }}
+                </button>
 
                 <div class="placeholder"></div>
                 <div class="search-wrapper">
@@ -50,19 +54,48 @@
                 {{ $t("No Monitors, please") }} <router-link to="/add">{{ $t("add one") }}</router-link>
             </div>
 
-            <MonitorListItem
-                v-for="(item, index) in sortedMonitorList"
-                :key="index"
-                :monitor="item"
-                :isSelectMode="selectMode"
-                :isSelected="isSelected"
-                :select="select"
-                :deselect="deselect"
-                :filter-func="filterFunc"
-                :sort-func="sortFunc"
-                @showReservationDialog="showReservationDialog"
-                @showReleaseConfirm="showReleaseConfirm"
-            />
+            <!-- Grouped View -->
+            <div v-if="groupByDeviceType">
+                <div v-for="(monitors, deviceType) in groupedMonitors" :key="deviceType" class="device-group mb-3">
+                    <div class="device-group-header" @click="toggleGroup(deviceType)">
+                        <font-awesome-icon :icon="groupCollapsed[deviceType] ? 'chevron-right' : 'chevron-down'" class="me-2" />
+                        <strong>{{ $t(deviceType) }}</strong>
+                        <span class="badge bg-secondary ms-2">{{ monitors.length }}</span>
+                    </div>
+                    <div v-show="!groupCollapsed[deviceType]" class="device-group-content">
+                        <MonitorListItem
+                            v-for="(item, index) in monitors"
+                            :key="index"
+                            :monitor="item"
+                            :isSelectMode="selectMode"
+                            :isSelected="isSelected"
+                            :select="select"
+                            :deselect="deselect"
+                            :filter-func="filterFunc"
+                            :sort-func="sortFunc"
+                            @showReservationDialog="showReservationDialog"
+                            @showReleaseConfirm="showReleaseConfirm"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Normal List View -->
+            <div v-else>
+                <MonitorListItem
+                    v-for="(item, index) in sortedMonitorList"
+                    :key="index"
+                    :monitor="item"
+                    :isSelectMode="selectMode"
+                    :isSelected="isSelected"
+                    :select="select"
+                    :deselect="deselect"
+                    :filter-func="filterFunc"
+                    :sort-func="sortFunc"
+                    @showReservationDialog="showReservationDialog"
+                    @showReleaseConfirm="showReleaseConfirm"
+                />
+            </div>
         </div>
     </div>
 
@@ -114,6 +147,8 @@ export default {
             },
             currentMonitorId: null,
             currentReservedBy: "",
+            groupByDeviceType: false,
+            groupCollapsed: {},
         };
     },
     computed: {
@@ -160,6 +195,29 @@ export default {
 
         isDarkTheme() {
             return document.body.classList.contains("dark");
+        },
+        
+        /**
+         * Group monitors by device type
+         * @returns {object} Monitors grouped by device type
+         */
+        groupedMonitors() {
+            const groups = {};
+            
+            for (const monitor of this.sortedMonitorList) {
+                const deviceType = monitor.device_type || "Other";
+                if (!groups[deviceType]) {
+                    groups[deviceType] = [];
+                }
+                groups[deviceType].push(monitor);
+            }
+            
+            // Sort each group
+            for (const deviceType in groups) {
+                groups[deviceType].sort(this.sortFunc);
+            }
+            
+            return groups;
         },
 
         monitorListStyle() {
@@ -400,6 +458,15 @@ export default {
             return m1.name.localeCompare(m2.name);
         },
         /**
+         * Toggle device group collapse state
+         * @param {string} deviceType Device type to toggle
+         * @returns {void}
+         */
+        toggleGroup(deviceType) {
+            this.$set(this.groupCollapsed, deviceType, !this.groupCollapsed[deviceType]);
+        },
+        
+        /**
          * Show reservation dialog for a monitor
          * @param {object} monitor Monitor to reserve
          * @returns {void}
@@ -536,5 +603,34 @@ export default {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.device-group {
+    margin-bottom: 15px;
+}
+
+.device-group-header {
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+.device-group-header:hover {
+    background-color: #e9ecef;
+}
+
+.dark .device-group-header {
+    background-color: #2b2f32;
+}
+
+.dark .device-group-header:hover {
+    background-color: #3a3f44;
+}
+
+.device-group-content {
+    margin-top: 10px;
 }
 </style>

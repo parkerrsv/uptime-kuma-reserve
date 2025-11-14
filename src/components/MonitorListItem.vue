@@ -220,6 +220,12 @@ export default {
                 return "";
             }
             const until = dayjs(this.monitor.reservation.reserved_until);
+            
+            // Check if eternal (year 9999)
+            if (until.year() >= 9999) {
+                return this.$t("eternal");
+            }
+            
             const now = dayjs();
             const diff = until.diff(now);
             

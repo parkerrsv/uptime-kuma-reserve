@@ -167,6 +167,9 @@ class Monitor extends BeanModel {
             ping_count: this.ping_count,
             ping_per_request_timeout: this.ping_per_request_timeout,
             
+            // Device type
+            device_type: this.device_type || "Other",
+            
             // reservation info
             reservation: preloadData.reservations?.get(this.id) || null,
         };

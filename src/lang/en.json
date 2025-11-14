@@ -1199,5 +1199,15 @@
     "clickToReserve": "Click to reserve this monitor",
     "reservationSuccess": "Monitor reserved successfully",
     "reservationReleased": "Reservation released successfully",
-    "releaseReservationWarning": "This monitor is currently reserved by {0}. Please check with them before using it. Are you sure you want to release this reservation?"
+    "releaseReservationWarning": "This monitor is currently reserved by {0}. Please check with them before using it. Are you sure you want to release this reservation?",
+    "eternalReservation": "Reserve Eternally (no expiration)",
+    "eternal": "Eternal",
+    "Device Type": "Device Type",
+    "Server": "Server",
+    "Router": "Router",
+    "Switch": "Switch",
+    "Workstation": "Workstation",
+    "Printer": "Printer",
+    "IoT Device": "IoT Device",
+    "Group by Device": "Group by Device"
 }
