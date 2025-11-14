@@ -10,8 +10,11 @@ RUN npm ci
 # Copy application files
 COPY . .
 
+# Build frontend
+RUN npm run build
+
 # Expose ports
 EXPOSE 3000 3001
 
 # Start development server
-CMD ["npm", "run", "dev"]
+CMD ["node", "server/server.js"]
