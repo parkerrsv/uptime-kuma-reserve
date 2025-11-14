@@ -204,6 +204,30 @@ export default {
         groupedMonitors() {
             const groups = {};
             
+            this.sortedMonitorList.forEach(monitor => {
+                const deviceType = monitor.device_type || "Other";
+                if (!groups[deviceType]) {
+                    groups[deviceType] = [];
+                }
+                groups[deviceType].push(monitor);
+            });
+            
+            // Sort groups by device type name
+            const sortedGroups = {};
+            Object.keys(groups).sort().forEach(key => {
+                sortedGroups[key] = groups[key];
+            });
+            
+            return sortedGroups;
+        },
+        
+        /**
+         * Group monitors by device type
+         * @returns {object} Monitors grouped by device type
+         */
+        groupedMonitors() {
+            const groups = {};
+            
             for (const monitor of this.sortedMonitorList) {
                 const deviceType = monitor.device_type || "Other";
                 if (!groups[deviceType]) {
@@ -506,6 +530,15 @@ export default {
                 this.currentMonitorId = null;
                 this.currentReservedBy = "";
             }
+        },
+        
+        /**
+         * Toggle device group collapsed state
+         * @param {string} deviceType Device type to toggle
+         * @returns {void}
+         */
+        toggleGroup(deviceType) {
+            this.$set(this.groupCollapsed, deviceType, !this.groupCollapsed[deviceType]);
         }
     },
 };
