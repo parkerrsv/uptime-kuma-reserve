@@ -15,3 +15,18 @@ services:
       - ./src:/app/src
     environment:
       - NODE_ENV=development
+
+  uptime-kuma-alt:
+    build:
+      context: .
+      dockerfile: docker/dockerfile-dev
+    container_name: uptime-kuma-alt
+    ports:
+      - "3002:3001"
+    volumes:
+      - ./data-alt:/app/data
+      - ./server:/app/server
+      - ./db:/app/db
+      - ./src:/app/src
+    environment:
+      - NODE_ENV=development
